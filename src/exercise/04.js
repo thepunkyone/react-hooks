@@ -36,26 +36,28 @@ function Board({onClick, squares}) {
 }
 
 function Game() {
-  const initialStep = Array(9).fill(null)
+  const initialHistory = [Array(9).fill(null)]
 
-  const [history, setHistory] = useLocalStorageState('history', [initialStep])
-  const [currentStep, setCurrentStep] = useLocalStorageState('currentStep', initialStep)
+  const [history, setHistory] = useLocalStorageState('history', initialHistory)
+  const [currentStep, setCurrentStep] = useLocalStorageState('currentStep', 0)
 
-  const nextValue = calculateNextValue(currentStep)
-  const winner = calculateWinner(currentStep)
-  const status = calculateStatus(winner, currentStep, nextValue)
+  const currentSquares = history[currentStep]
+
+  const nextValue = calculateNextValue(currentSquares)
+  const winner = calculateWinner(currentSquares)
+  const status = calculateStatus(winner, currentSquares, nextValue)
 
   const moves = history.map((step, i) => {
-    const isCurrentlySelectedStep = JSON.stringify(step) === JSON.stringify(currentStep)
+    const isCurrentlySelectedStep = i === currentStep
 
     const label = i === 0
       ? `Go to game start${isCurrentlySelectedStep ? (' (current)') : ''}`
       : `Go to move #${i}${isCurrentlySelectedStep ? ' (current)' : ''}`
 
     return (
-      <li key={JSON.stringify(step)}>
+      <li key={step}>
         <button
-          onClick={() => setCurrentStep(step)}
+          onClick={() => setCurrentStep(i)}
           disabled={isCurrentlySelectedStep}
         >
           {label}
@@ -67,18 +69,18 @@ function Game() {
   function selectSquare(square) {
     if (winner || currentStep[square]) return
 
-    const currentStepCopy = [...currentStep]
+    const newHistory = history.slice(0, currentStep + 1)
 
-    currentStepCopy[square] = nextValue
+    const squares = [...currentSquares]
 
-    setCurrentStep(currentStepCopy)
-
-    setHistory(prevState => [...prevState, currentStepCopy])
+    squares[square] = nextValue
+    setHistory([...newHistory, squares])
+    setCurrentStep(newHistory.length)
   }
 
   function restart() {
-    setCurrentStep(initialStep)
-    setHistory([initialStep])
+    setCurrentStep(0)
+    setHistory(initialHistory)
   }
 
   return (
@@ -86,7 +88,7 @@ function Game() {
       <div className="game-board">
         <Board
           onClick={selectSquare}
-          squares={currentStep}
+          squares={currentSquares}
         />
         <button className="restart" onClick={restart}>
           restart
