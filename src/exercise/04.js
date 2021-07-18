@@ -67,7 +67,7 @@ function Game() {
   })
 
   function selectSquare(square) {
-    if (winner || currentStep[square]) return
+    if (winner || currentSquares[square]) return
 
     const newHistory = history.slice(0, currentStep + 1)
 
